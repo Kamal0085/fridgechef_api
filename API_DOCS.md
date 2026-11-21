@@ -142,7 +142,7 @@ Example response (`200`):
 
 - Headers: `Authorization: Bearer <token>`; roles: owner or admin.
 - Path: required string `id`. Query/body: none.
-- Success: `204 No Content`.
+- Success: `200 OK` with `data:null`.
 - Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `405 METHOD_NOT_ALLOWED`.
 
 Example request:
