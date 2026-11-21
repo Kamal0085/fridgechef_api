@@ -9,6 +9,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI(title="FridgeChef API", version="1.0.0", docs_url=None, redoc_url=None, openapi_url=None)
 
+USERS = {
+    "user-a-token": {"id": "user-a", "role": "user"},
+    "user-b-token": {"id": "user-b", "role": "user"},
+    "admin-token": {"id": "admin", "role": "admin"},
+}
+
 ingredients = [
     {"id": "ingredient_1", "name": "Tomatoes", "quantity": 4, "expiryDate": "2026-12-01", "ownerId": "user-a"},
     {"id": "ingredient_2", "name": "Eggs", "quantity": 6, "expiryDate": "2026-12-05", "ownerId": "user-a"},
