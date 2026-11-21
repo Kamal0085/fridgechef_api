@@ -90,4 +90,19 @@ async def create_ingredient(request: Request):
     item = {"id": f"ingredient_{next_id}", **data}
     next_id += 1
     ingredients.append(item)
-    return success("Ingredient created successfully.", item)
+    return success("Ingredient created successfully.", item, status=201)
+
+
+@app.put("/api/v1/ingredients/{ingredient_id}")
+async def update_ingredient(ingredient_id: str, request: Request):
+    item = find_ingredient(ingredient_id)
+    data = await request.json()
+    item.update(data)
+    return success("Ingredient updated successfully.", item)
+
+
+@app.delete("/api/v1/ingredients/{ingredient_id}")
+async def delete_ingredient(ingredient_id: str, request: Request):
+    item = find_ingredient(ingredient_id)
+    ingredients.remove(item)
+    return success("Ingredient deleted successfully.", None)
