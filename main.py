@@ -9,6 +9,15 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI(title="FridgeChef API", version="1.0.0", docs_url=None, redoc_url=None, openapi_url=None)
 
+ingredients = [
+    {"id": "ingredient_1", "name": "Tomatoes", "quantity": 4, "expiryDate": "2026-12-01", "ownerId": "user-a"},
+    {"id": "ingredient_2", "name": "Eggs", "quantity": 6, "expiryDate": "2026-12-05", "ownerId": "user-a"},
+    {"id": "ingredient_3", "name": "Milk", "quantity": 1, "expiryDate": "2026-11-28", "ownerId": "user-b"},
+    {"id": "ingredient_4", "name": "Carrots", "quantity": 3, "expiryDate": "2026-12-03", "ownerId": "user-b"},
+]
+next_id = 5
+
+
 class ApiError(Exception):
     def __init__(self, status, code, message, details=None):
         self.status = status
@@ -55,3 +64,45 @@ async def http_error_handler(request, exc):
 @app.exception_handler(Exception)
 async def unexpected_error_handler(request, exc):
     return failure(500, "INTERNAL_ERROR", "An unexpected server error occurred.")
+
+
+def find_ingredient(ingredient_id):
+    item = next((item for item in ingredients if item["id"] == ingredient_id), None)
+    if item is None:
+        raise ApiError(404, "NOT_FOUND", "Ingredient not found.")
+    return item
+
+
+@app.get("/api/v1/ingredients")
+async def list_ingredients(request: Request):
+    return success("Ingredients retrieved successfully.", ingredients, meta={"total": len(ingredients), "page": 1, "perPage": max(1, len(ingredients))})
+
+
+@app.get("/api/v1/ingredients/{ingredient_id}")
+async def get_ingredient(ingredient_id: str, request: Request):
+    return success("Ingredient retrieved successfully.", find_ingredient(ingredient_id))
+
+
+@app.post("/api/v1/ingredients")
+async def create_ingredient(request: Request):
+    global next_id
+    data = await request.json()
+    item = {"id": f"ingredient_{next_id}", **data}
+    next_id += 1
+    ingredients.append(item)
+    return success("Ingredient created successfully.", item, status=201)
+
+
+@app.put("/api/v1/ingredients/{ingredient_id}")
+async def update_ingredient(ingredient_id: str, request: Request):
+    item = find_ingredient(ingredient_id)
+    data = await request.json()
+    item.update(data)
+    return success("Ingredient updated successfully.", item)
+
+
+@app.delete("/api/v1/ingredients/{ingredient_id}")
+async def delete_ingredient(ingredient_id: str, request: Request):
+    item = find_ingredient(ingredient_id)
+    ingredients.remove(item)
+    return success("Ingredient deleted successfully.", None)
