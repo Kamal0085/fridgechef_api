@@ -60,8 +60,11 @@ The data is kept in memory and **resets every time the server restarts**. At sta
 Output of `git shortlog -sn --all`:
 
 ```
+    10  KamalHasanov15271
+     9  Ahmad
+     9  ialiyev230217
 ```
 
 ## Demo video
 
-YouTube:
+YouTube: https://youtu.be/_CXT7avJ9TY
