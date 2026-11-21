@@ -160,3 +160,32 @@ async def delete_ingredient(ingredient_id: str, request: Request):
     item = find_ingredient(ingredient_id, user)
     ingredients.remove(item)
     return success("Ingredient deleted successfully.", None)
+
+
+@app.get("/api/v1/greeting", response_class=HTMLResponse)
+async def greeting():
+    members = [
+        ("Ismayil Aliyev", "ialiyev23021", "Ingredient CRUD endpoints and mock data"),
+        ("Kamal Hasanov", "khasanov15271", "Authentication, role checks and error handling"),
+        ("Ahmad Taghiyev", "ataghiyev15190", "Input validation, greeting page and API documentation"),
+    ]
+    member_list = "".join(f"<li><strong>{escape(name)}</strong> ({escape(student_id)}): {escape(role)}</li>" for name, student_id, role in members)
+    routes = [
+        ("GET", "/api/v1/ingredients", "List accessible pantry ingredients"),
+        ("GET", "/api/v1/ingredients/{id}", "Get one ingredient"),
+        ("POST", "/api/v1/ingredients", "Add an ingredient"),
+        ("PUT", "/api/v1/ingredients/{id}", "Update an ingredient"),
+        ("DELETE", "/api/v1/ingredients/{id}", "Remove an ingredient"),
+        ("GET", "/api/v1/greeting", "Display this page"),
+    ]
+    route_list = "".join(f"<li><strong>{method}</strong> <code>{escape(path)}</code>: {escape(description)}</li>" for method, path, description in routes)
+    return HTMLResponse(f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FridgeChef API</title><style>
+*{{box-sizing:border-box}}body{{margin:0;background:#f2f6f2;color:#183a27;font-family:system-ui,Arial,sans-serif;line-height:1.65}}main{{max-width:840px;margin:40px auto;padding:32px;background:white;border-radius:16px;box-shadow:0 4px 24px #173c2514}}h1{{margin-top:0}}h2{{margin-top:28px}}li{{margin:9px 0;overflow-wrap:anywhere}}code{{background:#edf3ee;padding:3px 6px;border-radius:4px}}.status{{color:#17633a;font-weight:700}}@media(max-width:600px){{main{{margin:12px;padding:20px}}h1{{font-size:1.7rem}}}}
+</style></head><body><main><h1>FridgeChef API</h1>
+<p>FridgeChef helps students, young professionals, and families organize pantry ingredients to plan meals and reduce waste. This prototype demonstrates ingredient management using mock data.</p>
+<p class="status">Status: API running (v1)</p>
+<h2>Team members (Group 17)</h2><ul>{member_list}</ul>
+<h2>Available endpoints</h2><ul>{route_list}</ul>
+</main></body></html>""", media_type="text/html")
