@@ -1,0 +1,59 @@
+@base = http://127.0.0.1:8000
+
+GET {{base}}/api/v1/greeting
+
+###
+GET {{base}}/api/v1/ingredients
+Authorization: Bearer user-a-token
+
+###
+GET {{base}}/api/v1/ingredients/ingredient_1
+Authorization: Bearer user-a-token
+
+###
+POST {{base}}/api/v1/ingredients
+Authorization: Bearer user-a-token
+Content-Type: application/json
+
+{"name":"Potatoes","quantity":5,"expiryDate":"2026-12-15"}
+
+###
+PUT {{base}}/api/v1/ingredients/ingredient_1
+Authorization: Bearer user-a-token
+Content-Type: application/json
+
+{"name":"Tomatoes","quantity":7,"expiryDate":"2026-12-12"}
+
+###
+DELETE {{base}}/api/v1/ingredients/ingredient_2
+Authorization: Bearer user-a-token
+
+###
+GET {{base}}/api/v1/ingredients/ingredient_3
+Authorization: Bearer user-a-token
+
+###
+GET {{base}}/api/v1/ingredients/ingredient_3
+Authorization: Bearer admin-token
+
+###
+GET {{base}}/api/v1/ingredients
+
+###
+GET {{base}}/api/v1/ingredients
+Authorization: Bearer wrong-token
+
+###
+GET {{base}}/api/v1/ingredients/ingredient_999
+Authorization: Bearer admin-token
+
+###
+POST {{base}}/api/v1/ingredients
+Authorization: Bearer user-b-token
+Content-Type: application/json
+
+{"name":"A","quantity":-1,"expiryDate":"bad"}
+
+###
+PATCH {{base}}/api/v1/ingredients
+Authorization: Bearer admin-token
