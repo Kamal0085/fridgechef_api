@@ -105,9 +105,20 @@ async def validated_body(request):
     name = body.get("name")
     if not isinstance(name, str) or not 2 <= len(name.strip()) <= 80:
         details.append({"field": "name", "message": "Name must be a string of 2 to 80 characters."})
+    quantity = body.get("quantity")
+    if isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or not 0 < quantity <= 100000:
+        details.append({"field": "quantity", "message": "Quantity must be a positive number no greater than 100000."})
+    expiry = body.get("expiryDate")
+    if not isinstance(expiry, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", expiry):
+        details.append({"field": "expiryDate", "message": "Expiry date must have the format YYYY-MM-DD."})
+    else:
+        try:
+            date.fromisoformat(expiry)
+        except ValueError:
+            details.append({"field": "expiryDate", "message": "Expiry date must be a valid calendar date."})
     if details:
         raise ApiError(400, "VALIDATION_ERROR", "Invalid ingredient data.", details)
-    return body
+    return {"name": name.strip(), "quantity": quantity, "expiryDate": expiry}
 
 
 @app.get("/api/v1/ingredients")
@@ -127,7 +138,7 @@ async def get_ingredient(ingredient_id: str, request: Request):
 async def create_ingredient(request: Request):
     global next_id
     user = current_user(request)
-    data = await request.json()
+    data = await validated_body(request)
     item = {"id": f"ingredient_{next_id}", **data, "ownerId": user["id"]}
     next_id += 1
     ingredients.append(item)
@@ -138,7 +149,7 @@ async def create_ingredient(request: Request):
 async def update_ingredient(ingredient_id: str, request: Request):
     user = current_user(request)
     item = find_ingredient(ingredient_id, user)
-    data = await request.json()
+    data = await validated_body(request)
     item.update(data)
     return success("Ingredient updated successfully.", item)
 
