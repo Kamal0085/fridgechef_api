@@ -34,3 +34,19 @@ def failure(status, code, message, details=None):
 @app.exception_handler(ApiError)
 async def api_error_handler(request, exc):
     return failure(exc.status, exc.code, exc.message, exc.details)
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_handler(request, exc):
+    details = []
+    for entry in exc.errors():
+        field = ".".join(str(item) for item in entry["loc"] if item != "body") or "body"
+        details.append({"field": field, "message": entry["msg"]})
+    return failure(400, "VALIDATION_ERROR", "Invalid request parameters.", details)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request, exc):
+    codes = {404: ("NOT_FOUND", "Endpoint not found."), 405: ("METHOD_NOT_ALLOWED", "Method not allowed.")}
+    code, message = codes.get(exc.status_code, ("HTTP_ERROR", "Request failed."))
+    return failure(exc.status_code, code, message)
