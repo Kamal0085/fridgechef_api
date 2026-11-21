@@ -9,6 +9,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI(title="FridgeChef API", version="1.0.0", docs_url=None, redoc_url=None, openapi_url=None)
 
+USERS = {
+    "user-a-token": {"id": "user-a", "role": "user"},
+    "user-b-token": {"id": "user-b", "role": "user"},
+    "admin-token": {"id": "admin", "role": "admin"},
+}
+
 ingredients = [
     {"id": "ingredient_1", "name": "Tomatoes", "quantity": 4, "expiryDate": "2026-12-01", "ownerId": "user-a"},
     {"id": "ingredient_2", "name": "Eggs", "quantity": 6, "expiryDate": "2026-12-05", "ownerId": "user-a"},
@@ -66,28 +72,43 @@ async def unexpected_error_handler(request, exc):
     return failure(500, "INTERNAL_ERROR", "An unexpected server error occurred.")
 
 
-def find_ingredient(ingredient_id):
+def current_user(request):
+    header = request.headers.get("authorization", "")
+    match = re.fullmatch(r"Bearer (\S+)", header)
+    user = USERS.get(match.group(1)) if match else None
+    if user is None:
+        raise ApiError(401, "UNAUTHORIZED", "Missing or invalid authentication token.")
+    return user
+
+
+def find_ingredient(ingredient_id, user):
     item = next((item for item in ingredients if item["id"] == ingredient_id), None)
     if item is None:
         raise ApiError(404, "NOT_FOUND", "Ingredient not found.")
+    if user["role"] != "admin" and item["ownerId"] != user["id"]:
+        raise ApiError(403, "FORBIDDEN", "You cannot access another user's ingredient.")
     return item
 
 
 @app.get("/api/v1/ingredients")
 async def list_ingredients(request: Request):
-    return success("Ingredients retrieved successfully.", ingredients, meta={"total": len(ingredients), "page": 1, "perPage": max(1, len(ingredients))})
+    user = current_user(request)
+    visible = [item for item in ingredients if user["role"] == "admin" or item["ownerId"] == user["id"]]
+    return success("Ingredients retrieved successfully.", visible, meta={"total": len(visible), "page": 1, "perPage": max(1, len(visible))})
 
 
 @app.get("/api/v1/ingredients/{ingredient_id}")
 async def get_ingredient(ingredient_id: str, request: Request):
-    return success("Ingredient retrieved successfully.", find_ingredient(ingredient_id))
+    user = current_user(request)
+    return success("Ingredient retrieved successfully.", find_ingredient(ingredient_id, user))
 
 
 @app.post("/api/v1/ingredients")
 async def create_ingredient(request: Request):
     global next_id
+    user = current_user(request)
     data = await request.json()
-    item = {"id": f"ingredient_{next_id}", **data}
+    item = {"id": f"ingredient_{next_id}", **data, "ownerId": user["id"]}
     next_id += 1
     ingredients.append(item)
     return success("Ingredient created successfully.", item, status=201)
@@ -95,7 +116,8 @@ async def create_ingredient(request: Request):
 
 @app.put("/api/v1/ingredients/{ingredient_id}")
 async def update_ingredient(ingredient_id: str, request: Request):
-    item = find_ingredient(ingredient_id)
+    user = current_user(request)
+    item = find_ingredient(ingredient_id, user)
     data = await request.json()
     item.update(data)
     return success("Ingredient updated successfully.", item)
@@ -103,6 +125,7 @@ async def update_ingredient(ingredient_id: str, request: Request):
 
 @app.delete("/api/v1/ingredients/{ingredient_id}")
 async def delete_ingredient(ingredient_id: str, request: Request):
-    item = find_ingredient(ingredient_id)
+    user = current_user(request)
+    item = find_ingredient(ingredient_id, user)
     ingredients.remove(item)
     return success("Ingredient deleted successfully.", None)
