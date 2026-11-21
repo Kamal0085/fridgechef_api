@@ -50,3 +50,8 @@ async def http_error_handler(request, exc):
     codes = {404: ("NOT_FOUND", "Endpoint not found."), 405: ("METHOD_NOT_ALLOWED", "Method not allowed.")}
     code, message = codes.get(exc.status_code, ("HTTP_ERROR", "Request failed."))
     return failure(exc.status_code, code, message)
+
+
+@app.exception_handler(Exception)
+async def unexpected_error_handler(request, exc):
+    return failure(500, "INTERNAL_ERROR", "An unexpected server error occurred.")
