@@ -90,6 +90,26 @@ def find_ingredient(ingredient_id, user):
     return item
 
 
+async def validated_body(request):
+    try:
+        body = await request.json()
+    except (ValueError, UnicodeDecodeError):
+        raise ApiError(400, "VALIDATION_ERROR", "Invalid JSON request body.", [{"field": "body", "message": "A valid JSON object is required."}])
+    if not isinstance(body, dict):
+        raise ApiError(400, "VALIDATION_ERROR", "Invalid ingredient data.", [{"field": "body", "message": "A JSON object is required."}])
+
+    details = []
+    for key in body:
+        if key not in ("name", "quantity", "expiryDate"):
+            details.append({"field": key, "message": "Unknown or non-editable field."})
+    name = body.get("name")
+    if not isinstance(name, str) or not 2 <= len(name.strip()) <= 80:
+        details.append({"field": "name", "message": "Name must be a string of 2 to 80 characters."})
+    if details:
+        raise ApiError(400, "VALIDATION_ERROR", "Invalid ingredient data.", details)
+    return body
+
+
 @app.get("/api/v1/ingredients")
 async def list_ingredients(request: Request):
     user = current_user(request)
